@@ -1,5 +1,6 @@
 import nats, { Message } from "node-nats-streaming";
 import { randomBytes } from "crypto";
+import { TicketCreatedListener } from "./events/ticket-listener";
 
 console.clear();
 
@@ -17,25 +18,7 @@ stan.on("connect", () => {
     process.exit();
   });
 
-  const options = stan
-    .subscriptionOptions()
-    .setManualAckMode(true)
-    .setDeliverAllAvailable()
-    .setDurableName("test-durable");
-
-  const subscription = stan.subscribe(
-    "ticket:created",
-    "orders-service-queue-group",
-    options
-  );
-
-  subscription.on("message", (msg: Message) => {
-    console.log(
-      `Message received #${msg.getSequence()} with message: ${msg.getData()}`
-    );
-
-    msg.ack();
-  });
+  new TicketCreatedListener(stan).listen();
 });
 
 //if server closes from terminal command then client will be closed too
